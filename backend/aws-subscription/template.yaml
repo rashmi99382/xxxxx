@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Subscription/account backend for Offline Pharmacy Inventory. Stores no pharmacy inventory, billing, expiry, or sales data.
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 20
+    MemorySize: 256
+    Environment:
+      Variables:
+        DYNAMODB_TABLE_SHOPS: !Ref ShopsTable
+        JWT_SECRET: CHANGE_ME_IN_AWS_SECRET_OR_PARAMETER
+        RAZORPAY_KEY_ID: YOUR_KEY
+        RAZORPAY_SECRET: YOUR_SECRET
+        RAZORPAY_PLAN_BASIC_ID: YOUR_BASIC_PLAN_ID
+        RAZORPAY_PLAN_STANDARD_ID: YOUR_STANDARD_PLAN_ID
+        RAZORPAY_PLAN_PREMIUM_ID: YOUR_PREMIUM_PLAN_ID
+        ADMIN_EMAIL: admin@example.com
+        ADMIN_PASSWORD_HASH: YOUR_BCRYPT_HASH
+
+Resources:
+  SubscriptionApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - DELETE
+          - OPTIONS
+        AllowOrigins:
+          - "*"
+        AllowHeaders:
+          - Authorization
+          - Content-Type
+          - X-Razorpay-Signature
+
+  ShopsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: shopId
+          AttributeType: S
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: shopId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: email-index
+          KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  SubscriptionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src/handlers.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ShopsTable
+      Events:
+        Proxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref SubscriptionApi
+            Path: /{proxy+}
+            Method: ANY
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway base URL for Android BASE_API_URL
+    Value: !Sub "https://${SubscriptionApi}.execute-api.${AWS::Region}.amazonaws.com/"

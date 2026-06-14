@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.example.pharmacyinventory.app-mergeDebugResources-2:/values-sw600dp-v13/values-sw600dp-v13.xml",
+            "map": [
+                {
+                    "source": "/Users/rashmiranjan/Documents/Codex/2026-06-13/design-all-jetpack-compose-screens-for/work/android-build-tools/gradle-home/caches/8.10.2/transforms/891ee10bd310b2b3b68b8692b89df868/transformed/standard-core-1.7.14/res/values-sw600dp-v13/values-sw600dp-v13.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,93",
+                        "endLines": "2,15",
+                        "endColumns": "37,12",
+                        "endOffsets": "88,871"
+                    }
+                }
+            ]
+        }
+    ]
+}
