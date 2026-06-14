@@ -1,75 +1,122 @@
 # Offline Pharmacy Inventory Android App
 
-Android Studio project for a small pharmacy inventory, billing, reports, backup, local sync, and subscription-gated shop account workflow.
+An offline-first Android application for small pharmacies to manage inventory, billing, reports, backups, local sync, and subscription-based shop account access.
 
-The pharmacy operating data remains offline-first and local-only in Room. The optional online subscription module sends only shop account, subscription, device, and Razorpay payment metadata to the backend. It must not upload medicines, batches, stock, expiry dates, sales, purchases, bills, reports, backups, or pharmacy business data.
+The app is designed to keep pharmacy business data private and local. All medicine, stock, billing, purchase, sales, expiry, and report data remains stored on the device using a local Room database. The optional online subscription module only sends shop account, device, subscription, and Razorpay payment metadata to the backend.
 
-Built with:
+## Key Privacy Rule
 
-- Kotlin
-- Jetpack Compose
-- Material 3
-- Navigation Compose
-- Room database
-- Repository + ViewModel architecture
-- AndroidX Security encrypted PIN and subscription token storage
-- WorkManager local expiry reminders
-- Android Storage Access Framework for local PDF, CSV, and database backup files
-- Local peer-to-peer sync over nearby Wi-Fi, hotspot, Wi-Fi Direct group, or LAN
-- Retrofit for subscription/account API calls
-- Razorpay Android Checkout and hosted `shortUrl` payment launch
+This app does **not** upload pharmacy operating data to the backend.
+
+The backend must not receive or store:
+
+* Medicines
+* Batches
+* Stock details
+* Expiry dates
+* Sales records
+* Purchase records
+* Bills or invoices
+* Reports
+* Backup files
+* Pharmacy business data
+
+Only subscription-related metadata is sent online.
+
+## Tech Stack
+
+* Kotlin
+* Jetpack Compose
+* Material 3
+* Navigation Compose
+* Room Database
+* Repository + ViewModel architecture
+* AndroidX Security for encrypted PIN and subscription token storage
+* WorkManager for local expiry reminders
+* Android Storage Access Framework for PDF, CSV, and database backup files
+* Local peer-to-peer sync over Wi-Fi, hotspot, Wi-Fi Direct, or LAN
+* Retrofit for subscription/account API calls
+* Razorpay Android Checkout and hosted payment link support
+
+## Project Structure
+
+```text
+OfflinePharmacyInventoryApp/
+├── app/                    # Android application source code
+├── backend/                # Reference AWS subscription backend scaffold
+├── gradle/                 # Gradle wrapper files
+├── build.gradle.kts
+├── settings.gradle.kts
+├── gradle.properties
+└── README.md
+```
 
 ## Open in Android Studio
 
-Open this folder:
+Open the following folder in Android Studio:
 
 ```text
 OfflinePharmacyInventoryApp
 ```
 
-Then sync Gradle and run the `app` configuration.
+Then:
+
+1. Sync Gradle.
+2. Select the app run configuration.
+3. Run the app on an emulator or Android device.
 
 ## Gradle JDK Setup
 
-If the terminal or Android Studio shows:
+If Android Studio or the terminal shows this error:
 
 ```text
 Unable to locate a Java Runtime
 ```
 
-set the Gradle JDK in Android Studio:
+Set the Gradle JDK inside Android Studio:
 
 1. Open Android Studio.
-2. Go to `Settings` or `Preferences`.
-3. Open `Build, Execution, Deployment > Build Tools > Gradle`.
-4. Set `Gradle JDK` to the Android Studio embedded JDK, usually named `Embedded JDK`, `jbr-17`, or `Android Studio default JDK`.
-5. Sync Gradle again.
+2. Go to **Settings** or **Preferences**.
+3. Open **Build, Execution, Deployment > Build Tools > Gradle**.
+4. Set **Gradle JDK** to the Android Studio embedded JDK.
 
-The Android Studio embedded JDK is sufficient. A separate system Java install is not required if Android Studio exposes its embedded JDK to Gradle.
+Common names are:
 
-## Compile Check
+```text
+Embedded JDK
+jbr-17
+Android Studio default JDK
+```
 
-After a JDK is available, run:
+A separate system Java installation is not required if Android Studio provides the embedded JDK.
+
+## Build Check
+
+After the JDK is available, run:
 
 ```bash
 ./gradlew clean
 ./gradlew assembleDebug
 ```
 
-The debug APK is created at:
+The debug APK will be generated at:
 
 ```text
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## Android Subscription Config
+## Android Subscription Configuration
 
-The app now points to your existing AWS backend by default:
+The app is currently configured to use the existing AWS backend:
 
-- `BASE_API_URL=https://qz8gcambkc.execute-api.ap-south-1.amazonaws.com/default/`
-- `RAZORPAY_KEY_ID=YOUR_KEY`
+```text
+BASE_API_URL=https://qz8gcambkc.execute-api.ap-south-1.amazonaws.com/default/
+RAZORPAY_KEY_ID=YOUR_KEY
+```
 
-The app uses the Razorpay public `keyId` returned from the backend payment API. You can still override build values through Gradle properties:
+The app uses the Razorpay public `keyId` returned from the backend payment API.
+
+You can override build values using Gradle properties:
 
 ```bash
 ./gradlew assembleDebug \
@@ -77,110 +124,172 @@ The app uses the Razorpay public `keyId` returned from the backend payment API. 
   -PRAZORPAY_KEY_ID=YOUR_RAZORPAY_KEY_ID
 ```
 
-Do not put `RAZORPAY_SECRET`, JWT secrets, database credentials, or AWS secrets in Android.
+## Security Notes
+
+Do not store the following secrets inside the Android app:
+
+```text
+RAZORPAY_SECRET
+JWT_SECRET
+Database credentials
+AWS access keys
+AWS secret keys
+Webhook secrets
+```
+
+All secrets must remain server-side only.
 
 ## AWS Subscription Backend
 
-Backend scaffold:
+The reference backend scaffold is available at:
 
 ```text
 backend/aws-subscription
 ```
 
-It contains:
+It includes:
 
-- API Gateway + Lambda + DynamoDB SAM template
-- JWT authentication helpers
-- Razorpay Subscription API reference scaffold
-- Razorpay webhook signature verification
-- Shop Admin subscription/device endpoints
-- Super Admin dashboard endpoints
-- `.env.example` for required backend secrets
+* API Gateway + Lambda + DynamoDB SAM template
+* JWT authentication helpers
+* Razorpay subscription API reference scaffold
+* Razorpay webhook signature verification
+* Shop admin subscription and device endpoints
+* Super admin dashboard endpoints
+* `.env.example` for required backend secrets
 
 The backend stores only:
 
-- shop/account metadata
-- subscription status and plan
-- allowed/registered devices
-- Razorpay customer/subscription/payment metadata
+* Shop/account metadata
+* Subscription status and plan
+* Allowed or registered devices
+* Razorpay customer, subscription, and payment metadata
 
-It does not store pharmacy inventory or billing records.
+It does not store pharmacy inventory, billing, sales, purchase, report, or backup records.
 
 ## Local Room Persistence
 
-All pharmacy data is stored locally in:
+All pharmacy operating data is stored locally in:
 
 ```text
 offline_pharmacy_inventory.db
 ```
 
-Stored local tables include:
+Local tables include:
 
-- Medicines
-- Batches
-- Suppliers
-- Sales
-- Sale items
-- Purchases
-- Purchase items
-- Stock adjustments
+* Medicines
+* Batches
+* Suppliers
+* Sales
+* Sale items
+* Purchases
+* Purchase items
+* Stock adjustments
 
-Data persists after closing and reopening the app.
+Data remains available after closing and reopening the app.
 
 ## Offline Multi-Device Sync
 
-Local discovery starts automatically when the app opens. Devices advertise a local `_pharmacysync._tcp.` service and discover nearby devices using Android NSD, but they do not exchange data automatically.
+The app supports local peer-to-peer sync over nearby networks.
 
-To share data, open `Backup` on both phones and tap `Trust & sync` for the other device. For two-way sync, both phones must trust each other. Unknown devices on the same Wi-Fi are blocked and cannot read or write pharmacy data.
+Supported connection types:
 
-Sync works when trusted devices are on the same local Wi-Fi network, phone hotspot, Wi-Fi Direct group, or reachable LAN. Devices can continue working offline for days; when they later meet on a local network, the shop owner chooses the device and syncs local Room data.
+* Same Wi-Fi network
+* Phone hotspot
+* Wi-Fi Direct group
+* Reachable LAN
+
+Local discovery starts automatically when the app opens. Devices advertise and discover a local service:
+
+```text
+_pharmacysync._tcp.
+```
+
+Devices do not exchange data automatically.
+
+To sync data:
+
+1. Open **Backup** on both phones.
+2. Select the nearby device.
+3. Tap **Trust & sync**.
+4. For two-way sync, both phones must trust each other.
+
+Unknown devices on the same network are blocked and cannot read or write pharmacy data.
+
+Devices can continue working offline for days. When they later connect to the same nearby network, the shop owner can choose the trusted device and sync local Room data.
 
 ## Completed Local Pharmacy Features
 
-- Add medicine to Room.
-- Add batch / stock-in to Room.
-- Same medicine can have multiple batches.
-- Stock list reads persisted Room batches.
-- Sales are saved in a Room transaction.
-- Sale stock reduction uses FEFO: First Expiry First Out.
-- Negative stock is blocked with guarded SQL updates.
-- Expired stock is blocked by default and requires explicit confirmation from the bill screen.
-- Low stock screen reads real persisted quantities.
-- Expiry alert screen reads real persisted expiry dates.
-- Sales report reads real persisted sales.
-- PDF invoice export writes a local PDF file.
-- Stock CSV export writes a local CSV file.
-- Sales CSV export writes a local CSV file.
-- Database backup export/import uses local files through Android file picker.
-- Trusted local peer sync over nearby network connections.
-- PIN lock uses `EncryptedSharedPreferences`.
-- WorkManager schedules local expiry reminder checks.
+* Add medicine to Room database
+* Add batch / stock-in to Room database
+* Support multiple batches for the same medicine
+* Persisted stock list from Room batches
+* Sales saved using Room transaction
+* FEFO stock reduction: First Expiry First Out
+* Negative stock prevention using guarded SQL updates
+* Expired stock blocked by default
+* Explicit expired-stock confirmation from bill screen
+* Low-stock screen using real persisted quantities
+* Expiry alert screen using real persisted expiry dates
+* Sales report using real persisted sales data
+* Local PDF invoice export
+* Local stock CSV export
+* Local sales CSV export
+* Local database backup export/import
+* Trusted local peer sync over nearby network connections
+* PIN lock using EncryptedSharedPreferences
+* WorkManager local expiry reminder checks
 
-## Subscription Features Added
+## Subscription Features
 
-- Shop login screen.
-- Register shop screen using `POST /auth/register`.
-- Subscription plan screen.
-- Razorpay payment launch through backend `shortUrl`, with Checkout fallback using backend-returned `keyId` and subscription id.
-- Subscription status screen.
-- Device management screen.
-- Renewal screen.
-- Offline grace warning screen.
-- Super Admin login/dashboard scaffold.
-- Local subscription cache in `EncryptedSharedPreferences`.
-- Retrofit API layer with auth token interceptor.
-- 24-hour validation cache and 7-day offline grace logic.
-- `TRIAL` subscriptions are accepted by the subscription gate for the 7-day first version.
+* Shop login screen
+* Shop registration using `POST /auth/register`
+* Subscription plan screen
+* Razorpay payment launch through backend `shortUrl`
+* Razorpay Checkout fallback using backend-returned `keyId` and subscription ID
+* Subscription status screen
+* Device management screen
+* Renewal screen
+* Offline grace warning screen
+* Super admin login and dashboard scaffold
+* Local subscription cache using EncryptedSharedPreferences
+* Retrofit API layer with auth token interceptor
+* 24-hour validation cache
+* 7-day offline grace logic
+* Trial subscription gate support for the first version
 
 ## Optional Demo Data
 
-The database starts empty. Settings and Backup/Restore include an optional demo seed action that only inserts demo rows if the database is empty.
+The database starts empty.
+
+Settings and Backup/Restore include an optional demo seed action. Demo data is inserted only if the database is empty.
 
 ## Known Limitations
 
-- The Android app is wired to your existing AWS API Gateway URL. The `backend/aws-subscription` folder remains only a reference scaffold and is not required for this deployed backend.
-- The backend must continue to keep Razorpay secret, webhook secret, and JWT secret server-side only.
-- Database restore replaces the Room database file and asks the user to close and reopen the app so Room reloads the restored file cleanly.
-- Local notifications on Android 13+ require the user to grant notification permission.
-- Local sync is direct peer-to-peer and requires trusted devices to be reachable on the same nearby network at the same time.
-- If two offline devices edit the same batch before syncing, the newest batch update is kept during merge. Keep regular backups for audit safety.
+* The Android app is wired to the existing AWS API Gateway URL.
+* The `backend/aws-subscription` folder is a reference scaffold and is not required for the already deployed backend.
+* Razorpay secret, webhook secret, JWT secret, and backend credentials must remain server-side only.
+* Database restore replaces the Room database file.
+* After restoring a database backup, the user should close and reopen the app so Room reloads the restored file cleanly.
+* Local notifications on Android 13+ require notification permission from the user.
+* Local sync requires trusted devices to be reachable on the same nearby network at the same time.
+* If two offline devices edit the same batch before syncing, the newest batch update is kept during merge.
+* Regular backups are recommended for audit and safety.
+
+## Build Output
+
+After a successful debug build, the APK is available at:
+
+```text
+app/build/outputs/apk/debug/app-debug.apk
+```
+
+## License
+
+Add your license details here.
+
+Example:
+
+```text
+Copyright © 2026
+All rights reserved.
+```
